@@ -1,39 +1,50 @@
 package pcd.threadVersion.controller;
 
-import pcd.sketch02.model.Counter;
-import pcd.sketch02.util.BoundedBuffer;
-import pcd.sketch02.util.BoundedBufferImpl;
+import pcd.threadVersion.util.*;
+import pcd.threadVersion.model.Board;
+import pcd.threadVersion.view.View;
+import pcd.threadVersion.view.ViewModel;
 
 public class ActiveController extends Thread {
 
-	private BoundedBuffer<Cmd> cmdBuffer;
-	private Counter counter;
-	
-	public ActiveController(Counter counter) {
-		this.cmdBuffer = new BoundedBufferImpl<Cmd>(100);
-		this.counter = counter;
+	private final Board board;
+	private final View view;
+	private final ViewModel viewModel;
+	private BoundedBuffer<Cmd> buffer;
+
+	public  ActiveController(Board board, View view, ViewModel viewModel, BoundedBuffer<Cmd> buffer) {
+		this.board = board;
+		this.view = view;
+		this.viewModel = viewModel;
+		this.buffer = buffer;
 	}
 	
 	public void run() {
 		log("started.");
-		while (true) {
+		long lastTime = System.currentTimeMillis();
+		while (!board.isGameOver()) {
+			long currentTime = System.currentTimeMillis();
+			long dt = currentTime - lastTime;
+			Cmd command = buffer.poll();
+			if (command != null) {
+				if (command instanceof KickCmd) {
+					KickCmd kick = (KickCmd) command;
+					board.hitPlayerBall(kick.getImpulse());
+				}
+			}
+			board.updateState(dt);
+			int currentFps = (dt > 0) ? (int) (1000 / dt) : 0;
+			viewModel.update(board, currentFps);
+			view.render();
+			lastTime = currentTime;
 			try {
-				log("Waiting for cmds ");
-				var cmd = cmdBuffer.get();
-				log("new cmd fetched: " + cmd);
-				cmd.execute(counter);
-			} catch (Exception ex) {
-				ex.printStackTrace();
+				Thread.sleep(20);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				break;
 			}
 		}
-	}
-	
-	public void notifyNewCmd(Cmd cmd) {
-		try {
-			cmdBuffer.put(cmd);
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
+		System.out.println("Game Over! Punteggio finale: " + board.getHumanScore());
 	}
 	
 	private void log(String msg) {

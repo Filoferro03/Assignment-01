@@ -1,9 +1,5 @@
 package pcd.threadVersion.model;
 
-import pcd.sketch01.Boundary;
-import pcd.sketch01.P2d;
-import pcd.sketch01.V2d;
-
 public class Ball {
     
     private P2d pos;

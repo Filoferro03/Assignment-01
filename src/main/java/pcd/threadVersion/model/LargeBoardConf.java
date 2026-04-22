@@ -1,10 +1,5 @@
 package pcd.threadVersion.model;
 
-import pcd.sketch01.*;
-import pcd.sketch01.Ball;
-import pcd.sketch01.Boundary;
-import pcd.sketch01.P2d;
-import pcd.sketch01.V2d;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,14 +7,14 @@ import java.util.List;
 public class LargeBoardConf implements BoardConf {
 
 	@Override
-	public pcd.sketch01.Ball getPlayerBall() {
-		return  new pcd.sketch01.Ball(new pcd.sketch01.P2d(0, -0.75), 0.05, 1.5, new pcd.sketch01.V2d(0,1));
+	public Ball getPlayerBall() {
+		return  new Ball(new P2d(-0.2, -0.75), 0.05, 1.5, new V2d(0,1));
 	}
 
 	@Override
-	public List<pcd.sketch01.Ball> getSmallBalls() {
+	public List<Ball> getSmallBalls() {
 		var ballRadius = 0.01;
-        var balls = new ArrayList<pcd.sketch01.Ball>();
+        var balls = new ArrayList<Ball>();
 
     	for (int row = 0; row < 20; row++) {
     		for (int col = 0; col < 20; col++) {
@@ -32,7 +27,7 @@ public class LargeBoardConf implements BoardConf {
     	return balls;
 	}
 
-	public pcd.sketch01.Boundary getBoardBoundary() {
+	public Boundary getBoardBoundary() {
         return new Boundary(-1.5,-1.0,1.5,1.0);
 	}
 }

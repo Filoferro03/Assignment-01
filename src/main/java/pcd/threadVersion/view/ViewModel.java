@@ -1,7 +1,8 @@
 package pcd.threadVersion.view;
 
-import pcd.sketch01.Board;
-import pcd.sketch01.P2d;
+
+import pcd.threadVersion.model.Board;
+import pcd.threadVersion.model.P2d;
 
 import java.util.ArrayList;
 

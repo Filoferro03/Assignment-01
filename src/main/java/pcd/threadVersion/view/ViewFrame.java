@@ -1,9 +1,12 @@
 package pcd.threadVersion.view;
 
-import pcd.sketch01.RenderSynch;
+import pcd.threadVersion.model.V2d;
+import sketch01.RenderSynch;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -12,11 +15,13 @@ public class ViewFrame extends JFrame {
     private VisualiserPanel panel;
     private ViewModel model;
     private RenderSynch sync;
+	private View view;
     
-    public ViewFrame(ViewModel model, int w, int h){
+    public ViewFrame(View view, ViewModel model, int w, int h){
+		this.view = view;
     	this.model = model;
     	this.sync = new RenderSynch();
-    	setTitle("Sketch 03");
+    	setTitle("Thread Version Game");
         setSize(w,h + 25);
         setResizable(false);
         panel = new VisualiserPanel(w,h);
@@ -27,6 +32,29 @@ public class ViewFrame extends JFrame {
 			}
 			public void windowClosed(WindowEvent ev){
 				System.exit(-1);
+			}
+		});
+		this.setFocusable(true);
+		this.requestFocusInWindow();
+
+		this.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				double impulseForce = 1.0;
+				switch (e.getKeyCode()) {
+					case KeyEvent.VK_UP:
+						view.handleInput(new V2d(0, impulseForce));
+						break;
+					case KeyEvent.VK_DOWN:
+						view.handleInput(new V2d(0, -impulseForce));
+						break;
+					case KeyEvent.VK_LEFT:
+						view.handleInput(new V2d(-impulseForce, 0));
+						break;
+					case KeyEvent.VK_RIGHT:
+						view.handleInput(new V2d(impulseForce, 0));
+						break;
+				}
 			}
 		});
     }

@@ -1,8 +1,8 @@
 package pcd.threadVersion.controller;
 
-import pcd.sketch02.model.Counter;
+import pcd.threadVersion.model.Board;
 
 public interface Cmd {
-	
-	void execute(Counter c);
+
+	void execute(Board board);
 }
