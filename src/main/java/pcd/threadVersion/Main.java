@@ -15,12 +15,13 @@ public class Main {
         BoundedBufferImpl<Cmd> buffer = new BoundedBufferImpl<>(10);
 
         ViewModel viewModel = new ViewModel();
-        View view = new View(viewModel, 600, 600, buffer); // Adatta i parametri al tuo costruttore
+        View view = new View(viewModel, 600, 600, buffer);
 
-        // 5. Creiamo il Controller
         ActiveController gameLoop = new ActiveController(board, view, viewModel, buffer);
 
-        // 6. Facciamo partire il gioco!
+        BotPlayer bot = new BotPlayer(buffer);
+        bot.start();
+
         gameLoop.start();
     }
 }

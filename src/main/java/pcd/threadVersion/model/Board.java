@@ -16,12 +16,14 @@ public class Board {
     public void init(BoardConf conf) {
     	balls = conf.getSmallBalls();    	
     	playerBall = conf.getPlayerBall();
+        botBall = conf.getBotBall();
     	bounds = conf.getBoardBoundary();
     }
     
     public void updateState(long dt) {
 
     	playerBall.updateState(dt, this);
+        botBall.updateState(dt, this);
     	
     	for (var b: balls) {
     		b.updateState(dt, this);
@@ -34,14 +36,22 @@ public class Board {
         }
     	for (var b: balls) {
     		Ball.resolveCollision(playerBall, b);
-    	} 
-    	   	    	
+            Ball.resolveCollision(botBall, b);
+    	}
+        Ball.resolveCollision(playerBall, botBall);
     }
 
     public void hitPlayerBall (V2d impulse) {
         if (playerBall != null) {
             V2d currentVelocity = playerBall.getVel();
             playerBall.kick(new V2d(currentVelocity.x() + impulse.x(), currentVelocity.y() + impulse.y()));
+        }
+    }
+
+    public void hitBotBall (V2d impulse) {
+        if (botBall != null) {
+            V2d currentVelocity = botBall.getVel();
+            botBall.kick(new V2d(currentVelocity.x() + impulse.x(), currentVelocity.y() + impulse.y()));
         }
     }
     
@@ -52,6 +62,8 @@ public class Board {
     public Ball getPlayerBall() {
     	return playerBall;
     }
+
+    public Ball getBotBall() {return botBall;}
     
     public  Boundary getBounds(){
         return bounds;

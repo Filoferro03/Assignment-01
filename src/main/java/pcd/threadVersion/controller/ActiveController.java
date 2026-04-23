@@ -28,8 +28,9 @@ public class ActiveController extends Thread {
 			Cmd command = buffer.poll();
 			if (command != null) {
 				if (command instanceof KickCmd) {
-					KickCmd kick = (KickCmd) command;
-					board.hitPlayerBall(kick.getImpulse());
+					board.hitPlayerBall(((KickCmd)command).getImpulse());
+				} else if (command instanceof BotKickCmd) {
+					board.hitBotBall(((BotKickCmd) command).getImpulse());
 				}
 			}
 			board.updateState(dt);

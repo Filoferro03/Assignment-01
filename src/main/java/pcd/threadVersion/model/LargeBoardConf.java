@@ -8,7 +8,12 @@ public class LargeBoardConf implements BoardConf {
 
 	@Override
 	public Ball getPlayerBall() {
-		return  new Ball(new P2d(-0.2, -0.75), 0.05, 1.5, new V2d(0,1));
+		return  new Ball(new P2d(-0.2, -0.75), 0.05, 1.5, new V2d(0,0));
+	}
+
+	@Override
+	public Ball getBotBall() {
+		return new Ball(new P2d(0.2, -0.75), 0.05, 1.5, new V2d(0,0));
 	}
 
 	@Override

@@ -105,25 +105,44 @@ public class ViewFrame extends JFrame {
 	                int radiusY = (int)(b.radius()*delta);
 	                g2.drawOval(x0 - radiusX,y0 - radiusY,radiusX*2,radiusY*2);
 	    		}
-	
-    		    g2.setStroke(new BasicStroke(3));
-	    		var pb = model.getPlayerBall();
-	    		if (pb != null) {
-					var p1 = pb.pos();
-		        	int x0 = (int)(ox + p1.x()*delta);
-		            int y0 = (int)(oy - p1.y()*delta);
-	                int radiusX = (int)(pb.radius()*delta);
-	                int radiusY = (int)(pb.radius()*delta);
-	                g2.drawOval(x0 - radiusX,y0 - radiusY,radiusX*2,radiusY*2);
-	    		}
+
+				g2.setStroke(new BasicStroke(3));
+				var pb = model.getPlayerBall();
+				if (pb != null) {
+					drawBallWithLabel(g2, pb, "h", Color.BLUE);
+				}
+
+				var bb = model.getBotBall();
+				if (bb != null) {
+					drawBallWithLabel(g2, bb, "b", Color.RED);
+				}
     		    
     		    g2.setStroke(new BasicStroke(1));
+				g2.setColor(Color.BLACK);
+				g2.setFont(new Font("Arial", Font.PLAIN, 12));
 	    		g2.drawString("Num small balls: " + model.getBalls().size(), 20, 40);
 	    		g2.drawString("Frame per sec: " + model.getFramePerSec(), 20, 60);
 
 	    		sync.notifyFrameRendered();
     		
         }
-        
+
+		private void drawBallWithLabel(Graphics2D g2, BallViewInfo b, String label, Color color) {
+			var p = b.pos();
+			int x0 = (int)(ox + p.x()*delta);
+			int y0 = (int)(oy - p.y()*delta);
+			int r = (int)(b.radius()*delta);
+
+			g2.setColor(color);
+			g2.drawOval(x0 - r, y0 - r, r*2, r*2);
+
+			g2.setFont(new Font("Arial", Font.PLAIN, (int)(r * 1.2)));
+
+			FontMetrics fm = g2.getFontMetrics();
+			int textX = x0 - (fm.stringWidth(label) / 2);
+			int textY = y0 + ((fm.getAscent() - fm.getDescent()) / 2);
+
+			g2.drawString(label, textX, textY);
+		}
     }
 }
