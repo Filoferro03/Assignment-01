@@ -65,7 +65,7 @@ public class Ball {
      * @param a
      * @param b
      */
-    public static void resolveCollision(Ball a, Ball b) {
+    public static boolean resolveCollision(Ball a, Ball b) {
         
     	/* check if there is a collision */
     	
@@ -130,7 +130,9 @@ public class Ball {
 	        	a.vel = new V2d(a.vel.x() - (imp / a.mass) * nx, a.vel.y() - (imp / a.mass) * ny);                
 	        	b.vel = new V2d(b.vel.x() + (imp / b.mass) * nx, b.vel.y() + (imp / b.mass) * ny);
 	        }
+            return true;
         }
+        return false;
     }
 
     

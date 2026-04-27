@@ -15,7 +15,7 @@ public class Main {
         BoundedBufferImpl<Cmd> buffer = new BoundedBufferImpl<>(10);
 
         ViewModel viewModel = new ViewModel();
-        View view = new View(viewModel, 600, 600, buffer);
+        View view = new View(viewModel, 900, 700, buffer);
 
         ActiveController gameLoop = new ActiveController(board, view, viewModel, buffer);
 

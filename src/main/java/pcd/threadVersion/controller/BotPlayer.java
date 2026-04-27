@@ -18,8 +18,8 @@ public class BotPlayer extends Thread {
             try {
                 Thread.sleep(1000 + rand.nextInt(1500));
 
-                double forceX = (rand.nextDouble() * 6) - 3;
-                double forceY = (rand.nextDouble() * 6) - 3;
+                double forceX = (rand.nextDouble() * 3) - 1.5;
+                double forceY = (rand.nextDouble() * 3) - 1.5;
 
                 buffer.put(new BotKickCmd(new V2d(forceX, forceY)));
 

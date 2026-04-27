@@ -2,6 +2,7 @@ package pcd.threadVersion.view;
 
 
 import pcd.threadVersion.model.Board;
+import pcd.threadVersion.model.Boundary;
 import pcd.threadVersion.model.P2d;
 
 import java.util.ArrayList;
@@ -14,6 +15,12 @@ public class ViewModel {
 	private BallViewInfo player;
 	private BallViewInfo bot;
 	private int framePerSec;
+	private int humanScore = 0;
+	private int botScore = 0;
+	private boolean isGameOver = false;
+	private Boundary bounds;
+	private double holeRadius;
+	private boolean playerWon = false;
 	
 	public ViewModel() {
 		balls = new ArrayList<BallViewInfo>();
@@ -30,6 +37,12 @@ public class ViewModel {
 		player = new BallViewInfo(p.getPos(), p.getRadius());
 		var b =  board.getBotBall();
 		bot = new BallViewInfo(b.getPos(), b.getRadius());
+		this.humanScore = board.getHumanScore();
+		this.botScore = board.getBotScore();
+		this.isGameOver = board.isGameOver();
+		this.playerWon = board.hasPlayerWon();
+		this.bounds = board.getBounds();
+		this.holeRadius = board.getHoleRadius();
 	}
 	
 	public synchronized ArrayList<BallViewInfo> getBalls(){
@@ -49,6 +62,30 @@ public class ViewModel {
 
 	public synchronized BallViewInfo getBotBall() {
 		return bot;
+	}
+
+	public synchronized int getHumanScore() {
+		return humanScore;
+	}
+
+	public synchronized int getBotScore() {
+		return botScore;
+	}
+
+	public synchronized boolean isGameOver() {
+		return isGameOver;
+	}
+
+	public synchronized Boundary getBounds() {
+		return bounds;
+	}
+
+	public synchronized double getHoleRadius() {
+		return holeRadius;
+	}
+
+	public synchronized boolean hasPlayerWon() {
+		return playerWon;
 	}
 	
 }

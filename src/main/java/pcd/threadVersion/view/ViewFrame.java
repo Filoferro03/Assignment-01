@@ -78,7 +78,7 @@ public class ViewFrame extends JFrame {
             setSize(w,h + 25);
             ox = w/2;
             oy = h/2;
-            delta = Math.min(ox, oy);
+            delta = Math.min(ox, oy) - 25;
         }
 
         public void paint(Graphics g){
@@ -96,35 +96,73 @@ public class ViewFrame extends JFrame {
     		g2.drawLine(0,oy,ox*2,oy);
     		g2.setColor(Color.BLACK);
     		
-    		    g2.setStroke(new BasicStroke(1));
-	    		for (var b: model.getBalls()) {
-	    			var p = b.pos();
-	            	int x0 = (int)(ox + p.x()*delta);
-	                int y0 = (int)(oy - p.y()*delta);
-	                int radiusX = (int)(b.radius()*delta);
-	                int radiusY = (int)(b.radius()*delta);
-	                g2.drawOval(x0 - radiusX,y0 - radiusY,radiusX*2,radiusY*2);
-	    		}
+			g2.setStroke(new BasicStroke(1));
+			for (var b: model.getBalls()) {
+				var p = b.pos();
+				int x0 = (int)(ox + p.x()*delta);
+				int y0 = (int)(oy - p.y()*delta);
+				int radiusX = (int)(b.radius()*delta);
+				int radiusY = (int)(b.radius()*delta);
+				g2.drawOval(x0 - radiusX,y0 - radiusY,radiusX*2,radiusY*2);
+			}
 
-				g2.setStroke(new BasicStroke(3));
-				var pb = model.getPlayerBall();
-				if (pb != null) {
-					drawBallWithLabel(g2, pb, "h", Color.BLUE);
-				}
+			g2.setStroke(new BasicStroke(3));
+			var pb = model.getPlayerBall();
+			if (pb != null) {
+				drawBallWithLabel(g2, pb, "h", Color.BLUE);
+			}
+			var bb = model.getBotBall();
+			if (bb != null) {
+				drawBallWithLabel(g2, bb, "b", Color.RED);
+			}
 
-				var bb = model.getBotBall();
-				if (bb != null) {
-					drawBallWithLabel(g2, bb, "b", Color.RED);
-				}
-    		    
-    		    g2.setStroke(new BasicStroke(1));
+			var bounds = model.getBounds();
+			if (bounds != null) {
 				g2.setColor(Color.BLACK);
-				g2.setFont(new Font("Arial", Font.PLAIN, 12));
-	    		g2.drawString("Num small balls: " + model.getBalls().size(), 20, 40);
-	    		g2.drawString("Frame per sec: " + model.getFramePerSec(), 20, 60);
+				int holeR = (int)(model.getHoleRadius() * delta);
+				int h1x = (int)(ox + bounds.x0() * delta);
+				int h1y = (int)(oy - bounds.y1() * delta);
+				int h2x = (int)(ox + bounds.x1() * delta);
 
-	    		sync.notifyFrameRendered();
-    		
+				g2.fillOval(h1x - holeR, h1y - holeR, holeR * 2, holeR * 2);
+				g2.fillOval(h2x - holeR, h1y - holeR, holeR * 2, holeR * 2);
+			}
+
+			g2.setFont(new Font("Arial", Font.PLAIN, 20));
+
+			g2.setColor(Color.BLUE);
+			g2.drawString("Human: " + model.getHumanScore(), 20, this.getHeight() - 150);
+
+			g2.setColor(Color.RED);
+			g2.drawString("Bot: " + model.getBotScore(), this.getWidth() - 120, this.getHeight() - 150);
+
+			if (model.isGameOver()) {
+				g2.setColor(new Color(255, 255, 255, 180));
+				g2.fillRect(0, 0, this.getWidth(), this.getHeight());
+
+				g2.setFont(new Font("Arial", Font.BOLD, 50));
+				g2.setColor(Color.BLACK);
+
+				String goText = "GAME OVER";
+				if (model.hasPlayerWon()) {
+					goText += "  PLAYER WON";
+				} else {
+					goText += "  BOT WON";
+				}
+				FontMetrics fm = g2.getFontMetrics();
+				int textX = (this.getWidth() - fm.stringWidth(goText)) / 2;
+				int textY = this.getHeight() / 2;
+
+				g2.drawString(goText, textX, textY);
+			}
+    		    
+			g2.setStroke(new BasicStroke(1));
+			g2.setColor(Color.BLACK);
+			g2.setFont(new Font("Arial", Font.PLAIN, 12));
+			g2.drawString("Num small balls: " + model.getBalls().size(), this.getWidth()/3 + 20, 40);
+			g2.drawString("Frame per sec: " + model.getFramePerSec(), this.getWidth()/3 + 20, 60);
+
+			sync.notifyFrameRendered();
         }
 
 		private void drawBallWithLabel(Graphics2D g2, BallViewInfo b, String label, Color color) {
