@@ -16,6 +16,6 @@ public class KickCmd implements Cmd{
 
     @Override
     public void execute(Board board) {
-        return;
+        board.hitPlayerBall(impulse);
     }
 }

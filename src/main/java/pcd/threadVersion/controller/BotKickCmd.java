@@ -16,6 +16,6 @@ public class BotKickCmd implements Cmd{
 
     @Override
     public void execute(Board board) {
-        return;
+        board.hitBotBall(impulse);
     }
 }
