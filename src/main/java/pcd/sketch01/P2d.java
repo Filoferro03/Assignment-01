@@ -1,4 +1,4 @@
-package sketch01;
+package pcd.sketch01;
 
 public record P2d(double x, double y)  {
 
