@@ -26,43 +26,56 @@ public class ActiveController extends Thread {
 		this.masterMonitor = masterMonitor;
 		this.workers = workers;
 	}
-	
+
 	public void run() {
-		long t0 = System.currentTimeMillis();
-		long lastTime = System.currentTimeMillis();
 		int nFrames = 0;
+		long t0 = System.currentTimeMillis();
+		long lastUpdateTime = System.currentTimeMillis();
+
 		while (!board.isGameOver()) {
-			long currentTime = System.currentTimeMillis();
-			long dt = currentTime - lastTime;
-			Cmd command;
-			while ((command = buffer.poll()) != null) {
-				command.execute(board);
+
+			Cmd command = buffer.poll();
+			if (command != null) {
+				if (command instanceof KickCmd) {
+					board.hitPlayerBall(((KickCmd)command).getImpulse());
+				} else if (command instanceof BotKickCmd) {
+					board.hitBotBall(((BotKickCmd) command).getImpulse());
+				}
 			}
+
+			long elapsed = System.currentTimeMillis() - lastUpdateTime;
+			lastUpdateTime = System.currentTimeMillis();
+
 			for (PhysicsWorker w : workers) {
-				w.updateContext(dt);
+				w.updateContext(elapsed);
 			}
 			masterMonitor.startWorkers();
+
 			try {
 				masterMonitor.waitForAll();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 				break;
 			}
-			board.updateGlobalState(dt);
-			nFrames++;
-			long elapsedTotal = System.currentTimeMillis() - t0;
-			int currentFps = (elapsedTotal > 0) ? (int) (nFrames * 1000 / elapsedTotal) : 0;
-			viewModel.update(board, currentFps);
-			view.render();
 
-			lastTime = currentTime;
-			try {
-				Thread.sleep(7);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				break;
+			board.updateGlobalState(elapsed);
+
+			nFrames++;
+			int framePerSec = 0;
+			long dt = (System.currentTimeMillis() - t0);
+			if (dt > 0) {
+				framePerSec = (int)(nFrames * 1000 / dt);
 			}
+			// --------------------------------------
+			System.out.println("nFrames: " + nFrames + " | ms Passati (dt): " + dt + " | FPS Calcolati: " + framePerSec);
+			viewModel.update(board, framePerSec);
+			view.render();
 		}
+
+		for (PhysicsWorker w : workers) {
+			w.interrupt();
+		}
+
 		System.out.println("Game Over! Punteggio finale: " + board.getHumanScore());
 	}
 }
