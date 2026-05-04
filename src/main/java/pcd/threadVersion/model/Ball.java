@@ -1,16 +1,24 @@
 package pcd.threadVersion.model;
 
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 public class Ball {
     
     private P2d pos;
     private V2d vel;
-    private double radius;
-    private double mass;   
-    
-    private static double FRICTION_FACTOR = 0.25; 	/* 0 minimum */
-    private static double RESTITUTION_FACTOR = 1; 
+    private V2d nextVel = null;
+    private final double radius;
+    private final double mass;
+    private final int id;
+    private final Lock lock = new ReentrantLock();
+
+    private static int idGenerator = 0;
+    private static final double FRICTION_FACTOR = 0.25; 	/* 0 minimum */
+    private static final double RESTITUTION_FACTOR = 1;
 
     public Ball(P2d pos, double radius, double mass, V2d vel){
+       this.id = synchronizedGetNextId();
        this.pos = pos;
        this.radius = radius;
        this.mass = mass;
@@ -30,16 +38,23 @@ public class Ball {
         pos = pos.sum(vel.mul(dt_scaled));
      	applyBoundaryConstraints(ctx);
     }
-    
-    public void kick(V2d vel) {
-    	this.vel = vel;
+
+    public void kick(V2d impulse) {
+        lock.lock();
+        try {
+            if (this.nextVel == null) {
+                this.nextVel = this.vel;
+            }
+            this.nextVel = new V2d(this.nextVel.x() + impulse.x(), this.nextVel.y() + impulse.y());
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
      * 
      * Keep the ball inside the boundaries, updating the velocity in the case of bounces
-     * 
-     * @param ctx
+     *
      */
     private void applyBoundaryConstraints(Board ctx){
         Boundary bounds = ctx.getBounds();
@@ -61,78 +76,57 @@ public class Ball {
     /**
      * 
      * Resolving collision between 2 balls, updating their position and velocity
-     * 
-     * @param a
-     * @param b
+     *
      */
     public static boolean resolveCollision(Ball a, Ball b) {
-        
-    	/* check if there is a collision */
-    	
-    	/* compute dv = b.pos - a.pos vector */
+        // 1. Lock Ordering: stabiliamo chi bloccare per primo
+        Ball first = (a.id < b.id) ? a : b;
+        Ball second = (a.id < b.id) ? b : a;
 
-    	double dx   = b.pos.x() - a.pos.x();
-        double dy   = b.pos.y() - a.pos.y();
-        double dist = Math.hypot(dx, dy);
-        double minD = a.radius + b.radius;
-        
-        /* 
-         * There is a collision if the distance between the two balls is less than the sum of the radii 
-         * 
-         */
-        if (dist < minD && dist > 1e-6)  {
+        // Acquisizione bloccante e sicura, niente busy-waiting!
+        first.getLock().lock();
+        try {
+            second.getLock().lock();
+            try {
+                // 2. Ora siamo Thread-Safe! Leggiamo le posizioni aggiornate
+                double dx = b.pos.x() - a.pos.x();
+                double dy = b.pos.y() - a.pos.y();
+                double dist = Math.hypot(dx, dy);
+                double minD = a.radius + b.radius;
 
-	        /* 
-	         * Collision case - what to do:
-	         * 
-	         * 1) solve overlaps, moving balls 
-	         * 2) update velocities
-	         * 
-	         */
-	        
-        	/* dvn = V2d(nx,ny) = dv unit vector */
-    
-        	double nx = dx / dist;
-	        double ny = dy / dist;
-	
-	        /* 
-	         * 
-	         * Update positions to solve overlaps, moving balls along dvn
-	         * - the displacements is proportional to the mass
-	         * 
-	         */
-	        double overlap = minD - dist;
-	        double totalM  = a.mass + b.mass;
-	
-	        double a_factor = overlap * (b.mass / totalM);
-	        double a_deltax = nx * a_factor; 
-	        double a_deltay = ny * a_factor; 
-	        
-	        a.pos = new P2d(a.getPos().x() - a_deltax, a.getPos().y() - a_deltay);
-	        
-	        double b_factor = overlap * (a.mass / totalM);
-	        double b_deltax = nx * b_factor; 
-	        double b_deltay = ny * b_factor; 
-	
-	        b.pos = new P2d(b.getPos().x() + b_deltax, b.getPos().y() + b_deltay);
-	
-	        /* Update velocities  */
-	        
-	        /* relative speed along the normal vector*/
-	
-	        double dvx = b.vel.x() - a.vel.x();
-	        double dvy = b.vel.y() - a.vel.y(); 
-	        double dvn = dvx * nx + dvy * ny;
-	
-	        if (dvn <= 0) { /* if not already separating, update velocities */
-	        	
-	        	double imp = -(1 + RESTITUTION_FACTOR) * dvn / (1.0/a.getMass() + 1.0/b.getMass());        
-	        	a.vel = new V2d(a.vel.x() - (imp / a.mass) * nx, a.vel.y() - (imp / a.mass) * ny);                
-	        	b.vel = new V2d(b.vel.x() + (imp / b.mass) * nx, b.vel.y() + (imp / b.mass) * ny);
-	        }
-            return true;
+                if (dist < minD && dist > 1e-6) {
+                    // Metti qui tutto il tuo calcolo per l'urto elastico:
+                    double nx = dx / dist;
+                    double ny = dy / dist;
+                    double overlap = minD - dist;
+                    double totalM = a.mass + b.mass;
+
+                    // Aggiornamento posizioni
+                    double a_factor = overlap * (b.mass / totalM);
+                    a.pos = new P2d(a.pos.x() - nx * a_factor, a.pos.y() - ny * a_factor);
+
+                    double b_factor = overlap * (a.mass / totalM);
+                    b.pos = new P2d(b.pos.x() + nx * b_factor, b.pos.y() + ny * b_factor);
+
+                    // Aggiornamento velocità
+                    double dvx = b.vel.x() - a.vel.x();
+                    double dvy = b.vel.y() - a.vel.y();
+                    double dvn = dvx * nx + dvy * ny;
+
+                    if (dvn <= 0) {
+                        double imp = -(1 + RESTITUTION_FACTOR) * dvn / (1.0/a.mass + 1.0/b.mass);
+                        a.vel = new V2d(a.vel.x() - (imp / a.mass) * nx, a.vel.y() - (imp / a.mass) * ny);
+                        b.vel = new V2d(b.vel.x() + (imp / b.mass) * nx, b.vel.y() + (imp / b.mass) * ny);
+                    }
+                    return true;
+                }
+                return false;
+            } finally {
+                second.getLock().unlock();
+            }
+        } finally {
+            first.getLock().unlock();
         }
-        return false;
     }
 
     
@@ -152,4 +146,28 @@ public class Ball {
     	return radius;
     }
 
+    public void setNextVel(V2d nextVel) {
+        this.nextVel = nextVel;
+    }
+
+    public void applyNextState(long dt, Board board) {
+        lock.lock();
+        try {
+            if (nextVel != null) {
+                this.vel = nextVel;
+                this.nextVel = null;
+            }
+            updateState(dt, board);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public Lock getLock() {
+        return lock;
+    }
+
+    public synchronized int synchronizedGetNextId() {
+        return idGenerator++;
+    }
 }

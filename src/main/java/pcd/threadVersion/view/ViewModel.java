@@ -9,9 +9,12 @@ import java.util.ArrayList;
 
 record BallViewInfo(P2d pos, double radius) {}
 
+record HoleViewInfo(P2d pos, double radius) {}
+
 public class ViewModel {
 
-	private ArrayList<BallViewInfo> balls;
+	private final ArrayList<BallViewInfo> balls;
+	private final ArrayList<HoleViewInfo> holes;
 	private BallViewInfo player;
 	private BallViewInfo bot;
 	private int framePerSec;
@@ -19,11 +22,11 @@ public class ViewModel {
 	private int botScore = 0;
 	private boolean isGameOver = false;
 	private Boundary bounds;
-	private double holeRadius;
 	private boolean playerWon = false;
 	
 	public ViewModel() {
 		balls = new ArrayList<BallViewInfo>();
+		holes = new ArrayList<HoleViewInfo>();
 		framePerSec = 0;
 	}
 	
@@ -31,6 +34,13 @@ public class ViewModel {
 		balls.clear();
 		for (var b: board.getBalls()) {
 			balls.add(new BallViewInfo(b.getPos(), b.getRadius()));
+		}
+		holes.clear();
+		if (board.getHoles() != null) {
+			for (var h : board.getHoles()) {
+				// Convertiamo il V2d della logica nel P2d della view
+				holes.add(new HoleViewInfo(new P2d(h.getPos().x(), h.getPos().y()), h.getRadius()));
+			}
 		}
 		this.framePerSec = framePerSec;
 		var p = board.getPlayerBall();
@@ -42,14 +52,10 @@ public class ViewModel {
 		this.isGameOver = board.isGameOver();
 		this.playerWon = board.hasPlayerWon();
 		this.bounds = board.getBounds();
-		this.holeRadius = board.getHoleRadius();
 	}
 	
 	public synchronized ArrayList<BallViewInfo> getBalls(){
-		var copy = new ArrayList<BallViewInfo>();
-		copy.addAll(balls);
-		return copy;
-		
+		return new ArrayList<BallViewInfo>(this.balls);
 	}
 
 	public synchronized int getFramePerSec() {
@@ -80,12 +86,11 @@ public class ViewModel {
 		return bounds;
 	}
 
-	public synchronized double getHoleRadius() {
-		return holeRadius;
-	}
-
 	public synchronized boolean hasPlayerWon() {
 		return playerWon;
 	}
-	
+
+	public synchronized ArrayList<HoleViewInfo> getHoles() {
+		return new ArrayList<HoleViewInfo>(holes);
+	}
 }

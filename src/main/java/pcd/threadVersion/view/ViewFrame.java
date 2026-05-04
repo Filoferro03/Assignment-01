@@ -1,7 +1,6 @@
 package pcd.threadVersion.view;
 
 import pcd.threadVersion.model.V2d;
-import sketch01.RenderSynch;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,15 +11,13 @@ import java.awt.event.WindowEvent;
 
 public class ViewFrame extends JFrame {
     
-    private VisualiserPanel panel;
-    private ViewModel model;
-    private RenderSynch sync;
-	private View view;
+    private final VisualiserPanel panel;
+    private final ViewModel model;
+	private final View view;
     
     public ViewFrame(View view, ViewModel model, int w, int h){
 		this.view = view;
     	this.model = model;
-    	this.sync = new RenderSynch();
     	setTitle("Thread Version Game");
         setSize(w,h + 25);
         setResizable(false);
@@ -60,13 +57,7 @@ public class ViewFrame extends JFrame {
     }
      
     public void render(){
-		long nf = sync.nextFrameToRender();
         panel.repaint();
-		try {
-			sync.waitForFrameRendered(nf);
-		} catch (InterruptedException ex) {
-			ex.printStackTrace();
-		}
     }
         
     public class VisualiserPanel extends JPanel {
@@ -116,16 +107,15 @@ public class ViewFrame extends JFrame {
 				drawBallWithLabel(g2, bb, "b", Color.RED);
 			}
 
-			var bounds = model.getBounds();
-			if (bounds != null) {
-				g2.setColor(Color.BLACK);
-				int holeR = (int)(model.getHoleRadius() * delta);
-				int h1x = (int)(ox + bounds.x0() * delta);
-				int h1y = (int)(oy - bounds.y1() * delta);
-				int h2x = (int)(ox + bounds.x1() * delta);
+			g2.setColor(Color.BLACK);
+			for (var hole : model.getHoles()) {
+				var p = hole.pos();
 
-				g2.fillOval(h1x - holeR, h1y - holeR, holeR * 2, holeR * 2);
-				g2.fillOval(h2x - holeR, h1y - holeR, holeR * 2, holeR * 2);
+				int cx = (int)(ox + p.x() * delta);
+				int cy = (int)(oy - p.y() * delta);
+				int r = (int)(hole.radius() * delta);
+
+				g2.fillOval(cx - r, cy - r, r * 2, r * 2);
 			}
 
 			g2.setFont(new Font("Arial", Font.PLAIN, 20));
@@ -159,10 +149,9 @@ public class ViewFrame extends JFrame {
 			g2.setStroke(new BasicStroke(1));
 			g2.setColor(Color.BLACK);
 			g2.setFont(new Font("Arial", Font.PLAIN, 12));
-			g2.drawString("Num small balls: " + model.getBalls().size(), this.getWidth()/3 + 20, 40);
-			g2.drawString("Frame per sec: " + model.getFramePerSec(), this.getWidth()/3 + 20, 60);
+			g2.drawString("Num small balls: " + model.getBalls().size(), this.getWidth() * 7/16, 40);
+			g2.drawString("Frame per sec: " + model.getFramePerSec(), this.getWidth() * 7/16, 60);
 
-			sync.notifyFrameRendered();
         }
 
 		private void drawBallWithLabel(Graphics2D g2, BallViewInfo b, String label, Color color) {

@@ -1,65 +1,70 @@
 package pcd.threadVersion.model;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Board {
 
-    private List<Ball> balls;
-    private Ball playerBall;
-    private Ball botBall;
-    private Boundary bounds;
+    private final List<Ball> balls;
+    private final Ball playerBall;
+    private final Ball botBall;
+    private final Boundary bounds;
     private int humanScore = 0;
     private int botScore = 0;
     private boolean isGameOver = false;
-    private final double holeRadius = 0.4;
-    private Map<Ball, Integer> lastHit = new HashMap<>();
+    private final List<Hole> holes = new ArrayList<>();
+    private final Map<Ball, Integer> lastHit;
     private boolean playerWon = false;
-    
-    public Board(){} 
-    
-    public void init(BoardConf conf) {
-    	balls = conf.getSmallBalls();    	
-    	playerBall = conf.getPlayerBall();
+
+    public Board(BoardConf conf){
+        balls = conf.getSmallBalls();
+        playerBall = conf.getPlayerBall();
         botBall = conf.getBotBall();
-    	bounds = conf.getBoardBoundary();
+        bounds = conf.getBoardBoundary();
+        lastHit = new ConcurrentHashMap<>();
+        double holeRadius = 0.4;
+        holes.add(new Hole(new V2d(bounds.x0(), bounds.y1()), holeRadius));
+        holes.add(new Hole(new V2d(bounds.x1(), bounds.y1()), holeRadius));
     }
-    
-    public void updateState(long dt) {
 
-    	playerBall.updateState(dt, this);
-        if (botBall != null) {
-            botBall.updateState(dt, this);
-        }
+    public void detectCollisionsCyclic(int workerId, int totalWorkers) {
+        for (int i = workerId; i < balls.size(); i += totalWorkers) {
+            Ball b = balls.get(i);
 
-        for (var b: balls) {
-    		b.updateState(dt, this);
-    	}       	
-    	
-    	for (int i = 0; i < balls.size() - 1; i++) {
             for (int j = i + 1; j < balls.size(); j++) {
-                if (Ball.resolveCollision(balls.get(i), balls.get(j))) {
-                    lastHit.remove(balls.get(i));
-                    lastHit.remove(balls.get(j));
+                Ball other = balls.get(j);
+                if (Ball.resolveCollision(b, other)) {
+                    lastHit.remove(b);
+                    lastHit.remove(other);
                 }
             }
-        }
-    	for (var b: balls) {
-    		if (Ball.resolveCollision(playerBall, b)) {
+
+            if (playerBall != null && Ball.resolveCollision(playerBall, b)) {
                 lastHit.put(b, 1);
             }
-    	}
 
-        if (botBall != null) {
-            for (var b: balls) {
-                if (Ball.resolveCollision(botBall, b)) {
-                    lastHit.put(b, 2);
-                }
+            if (botBall != null && Ball.resolveCollision(botBall, b)) {
+                lastHit.put(b, 2);
             }
+        }
+    }
+
+    public void applyMovementsCyclic(int workerId, int totalWorkers, long dt) {
+        for (int i = workerId; i < balls.size(); i += totalWorkers) {
+            balls.get(i).applyNextState(dt, this);
+        }
+    }
+
+    public void updateGlobalState(long dt) {
+        if (playerBall != null && botBall != null) {
             Ball.resolveCollision(playerBall, botBall);
         }
+
+        if (playerBall != null) playerBall.applyNextState(dt, this);
+        if (botBall != null) botBall.applyNextState(dt, this);
 
         Iterator<Ball> it = balls.iterator();
         while (it.hasNext()) {
@@ -84,11 +89,7 @@ public class Board {
             isGameOver = true;
             System.out.println("Partita terminata: Bot è caduto in buca. Vince HUMAN!");
         } else if (balls.isEmpty()) {
-            if (humanScore > botScore) {
-                playerWon = true;
-            } else {
-                playerWon = false;
-            }
+            playerWon = humanScore > botScore;
             isGameOver = true;
             System.out.println("Partita terminata: Palline esaurite.");
         }
@@ -96,41 +97,35 @@ public class Board {
 
     public void hitPlayerBall (V2d impulse) {
         if (playerBall != null) {
-            V2d currentVelocity = playerBall.getVel();
-            playerBall.kick(new V2d(currentVelocity.x() + impulse.x(), currentVelocity.y() + impulse.y()));
+            playerBall.kick(impulse);
         }
     }
 
     public void hitBotBall (V2d impulse) {
         if (botBall != null) {
-            V2d currentVelocity = botBall.getVel();
-            botBall.kick(new V2d(currentVelocity.x() + impulse.x(), currentVelocity.y() + impulse.y()));
+            botBall.kick(impulse);
         }
     }
 
     private boolean isBallInHole(Ball b) {
-        double hole1X = bounds.x0();
-        double hole1Y = bounds.y1();
-
-        double hole2X = bounds.x1();
-        double hole2Y = bounds.y1();
-
-        double dist1 = Math.hypot(b.getPos().x() - hole1X, b.getPos().y() - hole1Y);
-        double dist2 = Math.hypot(b.getPos().x() - hole2X, b.getPos().y() - hole2Y);
-
-        return dist1 < holeRadius || dist2 < holeRadius;
+        for (Hole h : holes) {
+            if (h.checkCollision(b)) {
+                return true;
+            }
+        }
+        return false;
     }
-    
+
     public List<Ball> getBalls(){
     	return balls;
     }
-    
+
     public Ball getPlayerBall() {
     	return playerBall;
     }
 
     public Ball getBotBall() {return botBall;}
-    
+
     public  Boundary getBounds(){
         return bounds;
     }
@@ -145,11 +140,11 @@ public class Board {
         return isGameOver;
     }
 
-    public double getHoleRadius() {
-        return holeRadius;
-    }
-
     public boolean hasPlayerWon() {
         return playerWon;
+    }
+
+    public List<Hole> getHoles() {
+        return holes;
     }
 }
