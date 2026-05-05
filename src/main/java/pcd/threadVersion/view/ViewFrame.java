@@ -14,10 +14,12 @@ public class ViewFrame extends JFrame {
     private final VisualiserPanel panel;
     private final ViewModel model;
 	private final View view;
+	private final RenderSynch sync;
     
     public ViewFrame(View view, ViewModel model, int w, int h){
 		this.view = view;
     	this.model = model;
+		this.sync = new RenderSynch();
     	setTitle("Thread Version Game");
         setSize(w,h + 25);
         setResizable(false);
@@ -57,7 +59,13 @@ public class ViewFrame extends JFrame {
     }
      
     public void render(){
-        panel.repaint();
+		long nf = sync.nextFrameToRender();
+		panel.repaint();
+		try {
+			sync.waitForFrameRendered(nf);
+		} catch (InterruptedException ex) {
+			ex.printStackTrace();
+		}
     }
         
     public class VisualiserPanel extends JPanel {
@@ -151,7 +159,7 @@ public class ViewFrame extends JFrame {
 			g2.setFont(new Font("Arial", Font.PLAIN, 12));
 			g2.drawString("Num small balls: " + model.getBalls().size(), this.getWidth() * 7/16, 40);
 			g2.drawString("Frame per sec: " + model.getFramePerSec(), this.getWidth() * 7/16, 60);
-
+			sync.notifyFrameRendered();
         }
 
 		private void drawBallWithLabel(Graphics2D g2, BallViewInfo b, String label, Color color) {

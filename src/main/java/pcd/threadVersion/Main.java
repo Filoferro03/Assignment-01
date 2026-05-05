@@ -13,7 +13,7 @@ import java.util.List;
 
 public class Main {
     static void main() {
-        BoardConf conf = new LargeBoardConf();
+        BoardConf conf = new MassiveBoardConf();
 
         Board board = new Board(conf);
 
@@ -33,7 +33,7 @@ public class Main {
         }
         ActiveController gameLoop = new ActiveController(board, view, viewModel, buffer, masterMonitor, workers);
 
-        BotPlayer bot = new BotPlayer(buffer);
+        BotPlayer bot = new BotPlayer(buffer, board);
         bot.start();
 
         gameLoop.start();

@@ -1,28 +1,37 @@
 package pcd.threadVersion.controller;
 
+import pcd.threadVersion.model.Ball;
+import pcd.threadVersion.model.Board;
 import pcd.threadVersion.util.BoundedBuffer;
 import pcd.threadVersion.model.V2d;
 import java.util.Random;
 
 public class BotPlayer extends Thread {
     private final BoundedBuffer<Cmd> buffer;
-    private final Random rand = new Random();
+    private final Board board;
+    private final Random rand = new Random(2);
 
-    public BotPlayer(BoundedBuffer<Cmd> buffer) {
+    public BotPlayer(BoundedBuffer<Cmd> buffer,  Board board) {
         this.buffer = buffer;
+        this.board = board;
     }
 
     @Override
     public void run() {
-        while (true) {
+        long lastKickTime = System.currentTimeMillis();
+
+        while (!board.isGameOver()) {
             try {
-                Thread.sleep(1000 + rand.nextInt(1500));
-
-                double forceX = (rand.nextDouble() * 3) - 1.5;
-                double forceY = (rand.nextDouble() * 3) - 1.5;
-
-                buffer.put(new BotKickCmd(new V2d(forceX, forceY)));
-
+                Ball bb = board.getBotBall();
+                if (bb != null) {
+                    if (bb.getVel().abs() < 0.05 && (System.currentTimeMillis() - lastKickTime > 2000)) {
+                        double angle = rand.nextDouble() * Math.PI * 0.25;
+                        V2d v = new V2d(Math.cos(angle), Math.sin(angle)).mul(1.5);
+                        buffer.put(new BotKickCmd(v));
+                        lastKickTime = System.currentTimeMillis();
+                    }
+                }
+                Thread.sleep(50);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 break;
@@ -30,3 +39,4 @@ public class BotPlayer extends Thread {
         }
     }
 }
+

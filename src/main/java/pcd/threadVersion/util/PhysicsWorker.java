@@ -33,9 +33,9 @@ public class PhysicsWorker extends Thread {
             try {
                 masterMonitor.waitForStart(frame);
                 if (!isRunning) break;
-                board.detectCollisionsCyclic(myId, totalWorkers);
-                internalBarrier.await();
                 board.applyMovementsCyclic(myId, totalWorkers, currentDt);
+                internalBarrier.await();
+                board.detectCollisionsCyclic(myId, totalWorkers);
                 masterMonitor.workerDone();
                 frame++;
             } catch (InterruptedException e) {

@@ -54,7 +54,7 @@ public class Board {
 
     public void applyMovementsCyclic(int workerId, int totalWorkers, long dt) {
         for (int i = workerId; i < balls.size(); i += totalWorkers) {
-            balls.get(i).applyNextState(dt, this);
+            balls.get(i).updateState(dt, this);
         }
     }
 
@@ -63,8 +63,8 @@ public class Board {
             Ball.resolveCollision(playerBall, botBall);
         }
 
-        if (playerBall != null) playerBall.applyNextState(dt, this);
-        if (botBall != null) botBall.applyNextState(dt, this);
+        if (playerBall != null) playerBall.updateState(dt, this);
+        if (botBall != null) botBall.updateState(dt, this);
 
         Iterator<Ball> it = balls.iterator();
         while (it.hasNext()) {

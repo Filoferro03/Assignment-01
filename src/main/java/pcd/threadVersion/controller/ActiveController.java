@@ -34,13 +34,9 @@ public class ActiveController extends Thread {
 
 		while (!board.isGameOver()) {
 
-			Cmd command = buffer.poll();
-			if (command != null) {
-				if (command instanceof KickCmd) {
-					board.hitPlayerBall(((KickCmd)command).getImpulse());
-				} else if (command instanceof BotKickCmd) {
-					board.hitBotBall(((BotKickCmd) command).getImpulse());
-				}
+			Cmd command;
+			while ((command = buffer.poll()) != null) {
+				command.execute(board);
 			}
 
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
@@ -66,8 +62,6 @@ public class ActiveController extends Thread {
 			if (dt > 0) {
 				framePerSec = (int)(nFrames * 1000 / dt);
 			}
-			// --------------------------------------
-			System.out.println("nFrames: " + nFrames + " | ms Passati (dt): " + dt + " | FPS Calcolati: " + framePerSec);
 			viewModel.update(board, framePerSec);
 			view.render();
 		}
