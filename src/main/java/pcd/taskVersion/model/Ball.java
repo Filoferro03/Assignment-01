@@ -11,6 +11,7 @@ public class Ball {
     private final double mass;
     private final int id;
     private final Lock lock = new ReentrantLock();
+    private volatile int lastHitter = 0;
 
     private static int idGenerator = 0;
     private static final double FRICTION_FACTOR = 0.25; 	/* 0 minimum */
@@ -138,5 +139,13 @@ public class Ball {
 
     public V2d getVel() {
         return vel;
+    }
+
+    public int getLastHitter() {
+        return lastHitter;
+    }
+
+    public void setLastHitter(int lastHitter) {
+        this.lastHitter = lastHitter;
     }
 }

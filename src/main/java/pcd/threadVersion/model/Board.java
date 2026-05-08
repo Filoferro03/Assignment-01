@@ -16,7 +16,6 @@ public class Board {
     private int botScore = 0;
     private boolean isGameOver = false;
     private final List<Hole> holes = new ArrayList<>();
-    private final Map<Ball, Integer> lastHit;
     private boolean playerWon = false;
 
     public Board(BoardConf conf){
@@ -24,7 +23,6 @@ public class Board {
         playerBall = conf.getPlayerBall();
         botBall = conf.getBotBall();
         bounds = conf.getBoardBoundary();
-        lastHit = new ConcurrentHashMap<>();
         double holeRadius = 0.4;
         holes.add(new Hole(new V2d(bounds.x0(), bounds.y1()), holeRadius));
         holes.add(new Hole(new V2d(bounds.x1(), bounds.y1()), holeRadius));
@@ -37,17 +35,17 @@ public class Board {
             for (int j = i + 1; j < balls.size(); j++) {
                 Ball other = balls.get(j);
                 if (Ball.resolveCollision(b, other)) {
-                    lastHit.remove(b);
-                    lastHit.remove(other);
+                    b.setLastHitter(0);
+                    other.setLastHitter(0);
                 }
             }
 
             if (playerBall != null && Ball.resolveCollision(playerBall, b)) {
-                lastHit.put(b, 1);
+                b.setLastHitter(1);
             }
 
             if (botBall != null && Ball.resolveCollision(botBall, b)) {
-                lastHit.put(b, 2);
+                b.setLastHitter(2);
             }
         }
     }
@@ -70,13 +68,10 @@ public class Board {
         while (it.hasNext()) {
             Ball b = it.next();
             if (isBallInHole(b)) {
-                Integer hitter = lastHit.get(b);
-                if (hitter != null) {
-                    if (hitter == 1) humanScore++;
-                    else if (hitter == 2) botScore++;
-                }
+                int hitter = b.getLastHitter();
+                if (hitter == 1) humanScore++;
+                else if (hitter == 2) botScore++;
                 it.remove();
-                lastHit.remove(b);
             }
         }
 

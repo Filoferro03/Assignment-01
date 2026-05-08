@@ -11,7 +11,7 @@ import pcd.taskVersion.view.ViewModel;
 
 public class Main {
     static void main() {
-        BoardConf conf = new MinimalBoardConf();
+        BoardConf conf = new MassiveBoardConf();
 
         Board board = new Board(conf);
 
@@ -23,7 +23,6 @@ public class Main {
         ActiveController gameLoop = new ActiveController(board, view, viewModel, buffer);
 
         BotPlayer bot = new BotPlayer(buffer, board);
-        view.render();
         bot.start();
         gameLoop.start();
     }
