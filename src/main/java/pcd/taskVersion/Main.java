@@ -11,8 +11,8 @@ import pcd.taskVersion.view.ViewModel;
 
 public class Main {
     static void main() {
-        BoardConf conf = new MassiveBoardConf();
-
+        //BoardConf conf = new MassiveBoardConf();
+        BoardConf conf = new LargeBoardConf();
         Board board = new Board(conf);
 
         BoundedBufferImpl<Cmd> buffer = new BoundedBufferImpl<>(10);

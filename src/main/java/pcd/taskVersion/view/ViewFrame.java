@@ -20,7 +20,7 @@ public class ViewFrame extends JFrame {
 		this.view = view;
     	this.model = model;
 		this.sync = new RenderSynch();
-    	setTitle("Thread Version Game");
+    	setTitle("Task Version Game");
         setSize(w,h + 25);
         setResizable(false);
         panel = new VisualiserPanel(w,h);
