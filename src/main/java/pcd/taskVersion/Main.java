@@ -3,9 +3,7 @@ package pcd.taskVersion;
 import pcd.taskVersion.controller.ActiveController;
 import pcd.taskVersion.controller.BotPlayer;
 import pcd.taskVersion.controller.Cmd;
-import pcd.taskVersion.model.Board;
-import pcd.taskVersion.model.BoardConf;
-import pcd.taskVersion.model.MassiveBoardConf;
+import pcd.taskVersion.model.*;
 import pcd.taskVersion.util.BoundedBufferImpl;
 import pcd.taskVersion.view.View;
 import pcd.taskVersion.view.ViewModel;
@@ -13,7 +11,7 @@ import pcd.taskVersion.view.ViewModel;
 
 public class Main {
     static void main() {
-        BoardConf conf = new MassiveBoardConf();
+        BoardConf conf = new MinimalBoardConf();
 
         Board board = new Board(conf);
 
