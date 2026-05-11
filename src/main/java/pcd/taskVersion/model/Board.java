@@ -17,6 +17,10 @@ public class Board {
     private boolean isGameOver = false;
     private final List<Hole> holes = new ArrayList<>();
     private boolean playerWon = false;
+    private final double CELL_SIZE = 0.025;
+    private int numCols;
+    private int numRows;
+    private List<Ball>[][] grid;
 
     public Board(BoardConf conf){
         balls = conf.getSmallBalls();
@@ -26,6 +30,16 @@ public class Board {
         double holeRadius = 0.4;
         holes.add(new Hole(new V2d(bounds.x0(), bounds.y1()), holeRadius));
         holes.add(new Hole(new V2d(bounds.x1(), bounds.y1()), holeRadius));
+        double width = bounds.x1() - bounds.x0();
+        double height = bounds.y1() - bounds.y0();
+        numCols = (int) Math.ceil(width / CELL_SIZE);
+        numRows = (int) Math.ceil(height / CELL_SIZE);
+        grid = new ArrayList[numRows][numCols];
+        for (int r = 0; r < numRows; r++) {
+            for (int c = 0; c < numCols; c++) {
+                grid[r][c] = new ArrayList<>();
+            }
+        }
     }
 
     public void updateGlobalState(long dt) {
@@ -64,19 +78,30 @@ public class Board {
 
     public void detectCollisionsCyclic(int workerId, int totalWorkers) {
         for (int i = workerId; i < balls.size(); i += totalWorkers) {
-            Ball b = balls.get(i);
-            for (int j = i + 1; j < balls.size(); j++) {
-                Ball other = balls.get(j);
-                if (Ball.resolveCollision(b, other)) {
-                    b.setLastHitter(0);
-                    other.setLastHitter(0);
+            Ball a = balls.get(i);
+            int myCol = (int) ((a.getPos().x() - bounds.x0()) / CELL_SIZE);
+            int myRow = (int) ((a.getPos().y() - bounds.y0()) / CELL_SIZE);
+            myCol = Math.clamp(myCol, 0, numCols - 1);
+            myRow = Math.clamp(myRow, 0, numRows - 1);
+            for (int r = myRow - 1; r <= myRow + 1; r++) {
+                for (int c = myCol - 1; c <= myCol + 1; c++) {
+                    if (r >= 0 && r < numRows && c >= 0 && c < numCols) {
+                        for (Ball b : grid[r][c]) {
+                            if (a.getId() < b.getId()) {
+                                if (Ball.resolveCollision(a, b)) {
+                                    a.setLastHitter(0);
+                                    b.setLastHitter(0);
+                                }
+                            }
+                        }
+                    }
                 }
             }
-            if (playerBall != null && Ball.resolveCollision(playerBall, b)) {
-                b.setLastHitter(1);
+            if (playerBall != null && Ball.resolveCollision(playerBall, a)) {
+                a.setLastHitter(1);
             }
-            if (botBall != null && Ball.resolveCollision(botBall, b)) {
-                b.setLastHitter(2);
+            if (botBall != null && Ball.resolveCollision(botBall, a)) {
+                a.setLastHitter(2);
             }
         }
     }
@@ -106,6 +131,21 @@ public class Board {
             }
         }
         return false;
+    }
+
+    public void buildSpatialGrid() {
+        for (int r = 0; r < numRows; r++) {
+            for (int c = 0; c < numCols; c++) {
+                grid[r][c].clear();
+            }
+        }
+        for (Ball b : balls) {
+            int col = (int) ((b.getPos().x() - bounds.x0()) / CELL_SIZE);
+            int row = (int) ((b.getPos().y() - bounds.y0()) / CELL_SIZE);
+            col = Math.clamp(col, 0, numCols - 1);
+            row = Math.clamp(row, 0, numRows - 1);
+            grid[row][col].add(b);
+        }
     }
 
     public List<Ball> getBalls(){

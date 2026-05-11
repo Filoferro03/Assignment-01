@@ -55,6 +55,7 @@ public class ActiveController extends Thread {
 			}
 			try {
 				executor.invokeAll(physicsTasks);
+				board.buildSpatialGrid();
 				executor.invokeAll(collisionTasks);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
