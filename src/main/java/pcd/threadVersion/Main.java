@@ -25,7 +25,7 @@ public class Main {
 
         int numWorkers = Runtime.getRuntime().availableProcessors() - 1;
         MasterWorkerMonitor masterMonitor = new MasterWorkerMonitor(numWorkers);
-        CustomCyclicBarrier internalBarrier = new CustomCyclicBarrier(numWorkers);
+        CustomCyclicBarrier internalBarrier = new CustomCyclicBarrier(numWorkers, board::buildSpatialGrid);
         List<PhysicsWorker> workers = new ArrayList<>();
         for (int i = 0; i < numWorkers; i++) {
             PhysicsWorker worker = new PhysicsWorker(board, i, numWorkers, masterMonitor, internalBarrier);

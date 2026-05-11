@@ -12,9 +12,11 @@ public class CustomCyclicBarrier {
 
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
+    private final Runnable barrierAction;
 
-    public CustomCyclicBarrier(int parties) {
+    public CustomCyclicBarrier(int parties, Runnable barrierAction) {
         this.totalParties = parties;
+        this.barrierAction = barrierAction;
     }
 
     public void await() throws InterruptedException {
@@ -24,6 +26,9 @@ public class CustomCyclicBarrier {
             waitingThreads++;
 
             if (waitingThreads == totalParties) {
+                if (barrierAction != null) {
+                    barrierAction.run();
+                }
                 waitingThreads = 0;
                 generation++;
                 condition.signalAll();

@@ -148,4 +148,8 @@ public class Ball {
     public void setLastHitter(int lastHitter) {
         this.lastHitter = lastHitter;
     }
+
+    public int getId() {
+        return id;
+    }
 }
