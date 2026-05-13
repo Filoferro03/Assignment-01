@@ -8,7 +8,6 @@ public class MasterWorkerMonitor {
     private final int numWorkers;
     private int workersFinished = 0;
 
-    // Sostituiamo currentFrame con generazione e fase
     private int currentGeneration = 0;
     private int currentPhase = 0;
 
@@ -20,7 +19,6 @@ public class MasterWorkerMonitor {
         this.numWorkers = numWorkers;
     }
 
-    // Il master avvia una specifica fase
     public void startPhase(int generation, int phase) {
         mutex.lock();
         try {
@@ -44,7 +42,6 @@ public class MasterWorkerMonitor {
         }
     }
 
-    // I worker aspettano la loro fase esatta
     public void waitForStart(int expectedGeneration, int expectedPhase) throws InterruptedException {
         mutex.lock();
         try {

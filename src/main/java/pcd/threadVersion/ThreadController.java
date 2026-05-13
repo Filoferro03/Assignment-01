@@ -30,12 +30,11 @@ public class ThreadController extends Thread {
 
 	public void run() {
 		int nFrames = 0;
-		int generation = 1; // Contatore del loop
+		int generation = 1;
 		long t0 = System.currentTimeMillis();
 		long lastUpdateTime = System.currentTimeMillis();
 
 		while (!board.isGameOver()) {
-
 			Cmd command;
 			while ((command = buffer.poll()) != null) {
 				command.execute(board);
@@ -49,24 +48,16 @@ public class ThreadController extends Thread {
 			}
 
 			try {
-				// FASE 1: I worker calcolano i movimenti
 				masterMonitor.startPhase(generation, 1);
 				masterMonitor.waitForAll();
-
-				// FASE INTERMEDIA: Il Master (da solo, senza lock) aggiorna la griglia
 				board.buildSpatialGrid();
-
-				// FASE 2: I worker calcolano le collisioni
 				masterMonitor.startPhase(generation, 2);
 				masterMonitor.waitForAll();
-
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 				break;
 			}
-
 			board.updateGlobalState(elapsed);
-
 			nFrames++;
 			int framePerSec = 0;
 			long dt = (System.currentTimeMillis() - t0);
@@ -75,14 +66,11 @@ public class ThreadController extends Thread {
 			}
 			viewModel.update(board, framePerSec);
 			view.render();
-
 			generation++;
 		}
-
 		for (PhysicsWorker w : workers) {
 			w.interrupt();
 		}
-
 		System.out.println("Game Over! Punteggio finale: " + board.getHumanScore());
 	}
 }

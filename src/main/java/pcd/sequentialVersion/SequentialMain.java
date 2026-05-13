@@ -13,12 +13,12 @@ public class SequentialMain {
     static void main() {
         BoardConf conf = new MassiveBoardConf();
         //BoardConf conf = new LargeBoardConf();
-        pcd.common.model.Board board = new Board(conf);
+        Board board = new Board(conf);
 
-        pcd.common.util.BoundedBufferImpl<Cmd> buffer = new BoundedBufferImpl<>(10);
+        BoundedBufferImpl<Cmd> buffer = new BoundedBufferImpl<>(10);
 
-        pcd.common.view.ViewModel viewModel = new ViewModel();
-        pcd.common.view.View view = new View(viewModel, 900, 700, buffer);
+        ViewModel viewModel = new ViewModel();
+        View view = new View(viewModel, 900, 700, buffer);
 
         SequentialController gameLoop = new SequentialController(board, view, viewModel, buffer);
 

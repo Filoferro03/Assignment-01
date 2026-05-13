@@ -43,11 +43,9 @@ public class SequentialController extends Thread {
 			if (elapsedTime > 0) {
 				framePerSec = (int)(nFrames * 1000 / elapsedTime);
 			}
-
 			viewModel.update(board, framePerSec);
 			view.render();
 		}
-
 		System.out.println("Game Over! Punteggio finale: " + board.getHumanScore());
 	}
 }
