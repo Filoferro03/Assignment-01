@@ -13,8 +13,8 @@ import java.util.List;
 
 public class Main {
     static void main() {
-        //BoardConf conf = new MassiveBoardConf();
-        BoardConf conf = new LargeBoardConf();
+        BoardConf conf = new MassiveBoardConf();
+        //BoardConf conf = new LargeBoardConf();
 
         Board board = new Board(conf);
 
@@ -23,7 +23,7 @@ public class Main {
         ViewModel viewModel = new ViewModel();
         View view = new View(viewModel, 900, 700, buffer);
 
-        int numWorkers = Runtime.getRuntime().availableProcessors() - 1;
+        int numWorkers = Runtime.getRuntime().availableProcessors() + 1;
         MasterWorkerMonitor masterMonitor = new MasterWorkerMonitor(numWorkers);
         CustomCyclicBarrier internalBarrier = new CustomCyclicBarrier(numWorkers, board::buildSpatialGrid);
         List<PhysicsWorker> workers = new ArrayList<>();
