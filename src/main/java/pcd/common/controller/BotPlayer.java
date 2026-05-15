@@ -9,7 +9,7 @@ import java.util.Random;
 public class BotPlayer extends Thread {
     private final BoundedBuffer<Cmd> buffer;
     private final Board board;
-    private final Random rand = new Random(2);
+    private final Random rand = new Random();
 
     public BotPlayer(BoundedBuffer<Cmd> buffer,  Board board) {
         this.buffer = buffer;
