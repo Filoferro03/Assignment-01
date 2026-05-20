@@ -6,6 +6,7 @@ import pcd.common.model.Board;
 import pcd.common.view.View;
 import pcd.common.view.ViewModel;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ThreadController extends Thread {
@@ -14,51 +15,65 @@ public class ThreadController extends Thread {
 	private final View view;
 	private final ViewModel viewModel;
 	private final BoundedBuffer<Cmd> buffer;
-	private final MasterWorkerMonitor masterMonitor;
+
+	private final CustomBarrier startFrameBarrier;
+	private final CustomBarrier movementBarrier;
+	private final CustomBarrier endFrameBarrier;
 	private final List<PhysicsWorker> workers;
 
-	public ThreadController(Board board, View view, ViewModel viewModel,
-	                        BoundedBuffer<Cmd> buffer, MasterWorkerMonitor masterMonitor,
-	                        List<PhysicsWorker> workers) {
+	public ThreadController(Board board, View view, ViewModel viewModel, BoundedBuffer<Cmd> buffer) {
 		this.board = board;
 		this.view = view;
 		this.viewModel = viewModel;
 		this.buffer = buffer;
-		this.masterMonitor = masterMonitor;
-		this.workers = workers;
+
+		int numWorkers = Runtime.getRuntime().availableProcessors();
+		this.workers = new ArrayList<>();
+		this.startFrameBarrier = new CustomBarrier(numWorkers + 1, null);
+		this.endFrameBarrier = new CustomBarrier(numWorkers + 1, null);
+		this.movementBarrier = new CustomBarrier(numWorkers, () -> {
+			board.buildSpatialGrid();
+		});
+		for (int i = 0; i < numWorkers; i++) {
+			PhysicsWorker worker = new PhysicsWorker(board, i, numWorkers, startFrameBarrier, movementBarrier, endFrameBarrier);
+			workers.add(worker);
+			worker.start();
+		}
 	}
 
 	public void run() {
 		int nFrames = 0;
-		int generation = 1;
 		long t0 = System.currentTimeMillis();
 		long lastUpdateTime = System.currentTimeMillis();
-
+		long accumulatedPhysicsTime = 0;
 		while (!board.isGameOver()) {
 			Cmd command;
 			while ((command = buffer.poll()) != null) {
 				command.execute(board);
 			}
-
 			long elapsed = System.currentTimeMillis() - lastUpdateTime;
+			if (elapsed <= 0) elapsed = 1;
 			lastUpdateTime = System.currentTimeMillis();
-
 			for (PhysicsWorker w : workers) {
 				w.updateContext(elapsed);
 			}
-
+			long tPhysStart = System.currentTimeMillis();
 			try {
-				masterMonitor.startPhase(generation, 1);
-				masterMonitor.waitForAll();
-				board.buildSpatialGrid();
-				masterMonitor.startPhase(generation, 2);
-				masterMonitor.waitForAll();
+				startFrameBarrier.await();
+				endFrameBarrier.await();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 				break;
 			}
 			board.updateGlobalState(elapsed);
+			long tPhysEnd = System.currentTimeMillis();
+			accumulatedPhysicsTime += (tPhysEnd - tPhysStart);
 			nFrames++;
+			if (nFrames % 100 == 0) {
+				long avgPhysicsTime = accumulatedPhysicsTime / 100;
+				System.out.println("[THR] Media tempo Fisica (ultimi 100 frame): " + avgPhysicsTime + " ms");
+				accumulatedPhysicsTime = 0;
+			}
 			int framePerSec = 0;
 			long dt = (System.currentTimeMillis() - t0);
 			if (dt > 0) {
@@ -66,7 +81,6 @@ public class ThreadController extends Thread {
 			}
 			viewModel.update(board, framePerSec);
 			view.render();
-			generation++;
 		}
 		for (PhysicsWorker w : workers) {
 			w.interrupt();

@@ -6,16 +6,23 @@ public class PhysicsWorker extends Thread {
     private final Board board;
     private final int myId;
     private final int totalWorkers;
-    private final MasterWorkerMonitor masterMonitor;
+    private final CustomBarrier startFrameBarrier;
+    private final CustomBarrier movementBarrier;
+    private final CustomBarrier endFrameBarrier;
 
     private long currentDt;
     private volatile boolean isRunning = true;
 
-    public PhysicsWorker(Board board, int myId, int totalWorkers, MasterWorkerMonitor masterMonitor) {
+    public PhysicsWorker(Board board, int myId, int totalWorkers,
+                         CustomBarrier startFrameBarrier,
+                         CustomBarrier movementBarrier,
+                         CustomBarrier endFrameBarrier) {
         this.board = board;
         this.myId = myId;
         this.totalWorkers = totalWorkers;
-        this.masterMonitor = masterMonitor;
+        this.startFrameBarrier = startFrameBarrier;
+        this.movementBarrier = movementBarrier;
+        this.endFrameBarrier = endFrameBarrier;
     }
 
     public void updateContext(long dt) {
@@ -24,20 +31,14 @@ public class PhysicsWorker extends Thread {
 
     @Override
     public void run() {
-        int generation = 1;
         while (isRunning) {
             try {
-                masterMonitor.waitForStart(generation, 1);
+                startFrameBarrier.await();
                 if (!isRunning) break;
                 board.applyMovementsCyclic(myId, totalWorkers, currentDt);
-                masterMonitor.workerDone();
-
-                masterMonitor.waitForStart(generation, 2);
-                if (!isRunning) break;
+                movementBarrier.await();
                 board.detectCollisionsCyclic(myId, totalWorkers);
-                masterMonitor.workerDone();
-
-                generation++;
+                endFrameBarrier.await();
             } catch (InterruptedException e) {
                 isRunning = false;
             }
