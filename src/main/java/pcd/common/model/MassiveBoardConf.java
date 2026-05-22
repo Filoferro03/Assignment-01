@@ -22,8 +22,8 @@ public class MassiveBoardConf implements BoardConf {
 
     	for (int row = 0; row < 30; row++) {
     		for (int col = 0; col < 150; col++) {
-        		var px = -1.0 + col*0.015;
-        		var py =  row*0.015;
+        		var px = -1.15 + col*0.015;
+        		var py =  -0.1 + row*0.022;
         		var b = new Ball(new P2d(px, py), ballRadius, 0.25, new V2d(0,0));
             	balls.add(b);    			
     		}
