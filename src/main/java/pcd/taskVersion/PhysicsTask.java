@@ -7,16 +7,18 @@ public class PhysicsTask implements Callable<Void> {
 
     private final int taskId;
     private final int totalTasks;
-    private final long dt;
+    private long dt;
     private final Board board;
 
-    public PhysicsTask(int taskId, int totalTasks, Board board,  long dt) {
+    public PhysicsTask(int taskId, int totalTasks, Board board) {
         this.taskId = taskId;
         this.totalTasks = totalTasks;
         this.board = board;
-        this.dt = dt;
     }
 
+    public void setDt(long dt) {
+        this.dt = dt;
+    }
 
     @Override
     public Void call() {

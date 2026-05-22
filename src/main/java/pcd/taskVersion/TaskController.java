@@ -37,6 +37,12 @@ public class TaskController extends Thread {
 		long lastUpdateTime = System.currentTimeMillis();
 		long t0 = System.currentTimeMillis();
 		int nFrames = 0;
+		List<PhysicsTask> physicsTasks = new ArrayList<>();
+		List<CollisionTask> collisionTasks = new ArrayList<>();
+		for (int i = 0; i < numTasks; i++) {
+			physicsTasks.add(new PhysicsTask(i, numTasks, board));
+			collisionTasks.add(new CollisionTask(i, numTasks, board));
+		}
 		while (!board.isGameOver()) {
 			Cmd command;
 			while ((command = buffer.poll()) != null) {
@@ -45,17 +51,13 @@ public class TaskController extends Thread {
 			long currentTime = System.currentTimeMillis();
 			long dt = currentTime - lastUpdateTime;
 			lastUpdateTime = currentTime;
+			if (dt <= 0) dt = 1;
 			try {
-				List<Callable<Void>> physicsTasks = new ArrayList<>();
-				for (int i = 0; i < numTasks; i++) {
-					physicsTasks.add(new PhysicsTask(i, numTasks, board, dt));
+				for (PhysicsTask pTask : physicsTasks) {
+					pTask.setDt(dt);
 				}
 				executor.invokeAll(physicsTasks);
 				board.buildSpatialGrid();
-				List<Callable<Void>> collisionTasks = new ArrayList<>();
-				for (int i = 0; i < numTasks; i++) {
-					collisionTasks.add(new CollisionTask(i, numTasks, board));
-				}
 				executor.invokeAll(collisionTasks);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -73,5 +75,6 @@ public class TaskController extends Thread {
 			view.render();
 		}
 		executor.shutdown();
+		System.out.println("Game Over! Punteggio finale: " + board.getHumanScore());
 	}
 }
