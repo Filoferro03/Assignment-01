@@ -10,7 +10,7 @@ public class PhysicsWorker extends Thread {
     private final CustomBarrier movementBarrier;
     private final CustomBarrier endFrameBarrier;
 
-    private long currentDt;
+    private volatile long currentDt;
     private volatile boolean isRunning = true;
 
     public PhysicsWorker(Board board, int myId, int totalWorkers,
