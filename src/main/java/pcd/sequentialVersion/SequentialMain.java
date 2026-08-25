@@ -23,6 +23,7 @@ public class SequentialMain {
         SequentialController gameLoop = new SequentialController(board, view, viewModel, buffer);
 
         BotPlayer bot = new BotPlayer(buffer, board);
+        bot.setDaemon(true);
         bot.start();
         gameLoop.start();
     }

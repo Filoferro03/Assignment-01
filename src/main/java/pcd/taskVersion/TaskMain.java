@@ -22,6 +22,7 @@ public class TaskMain {
         TaskController gameLoop = new TaskController(board, view, viewModel, buffer);
 
         BotPlayer bot = new BotPlayer(buffer, board);
+        bot.setDaemon(true);
         bot.start();
         gameLoop.start();
     }

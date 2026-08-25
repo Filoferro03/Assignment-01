@@ -19,6 +19,7 @@ public class ThreadMain {
         View view = new View(viewModel, 900, 700, buffer);
         ThreadController gameLoop = new ThreadController(board, view, viewModel, buffer);
         BotPlayer bot = new BotPlayer(buffer, board);
+        bot.setDaemon(true);
         bot.start();
         gameLoop.start();
     }
