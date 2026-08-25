@@ -1,8 +1,5 @@
 package pcd.common.model;
 
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 public class Ball {
     
     private volatile P2d pos;
@@ -10,7 +7,6 @@ public class Ball {
     private final double radius;
     private final double mass;
     private final int id;
-    private final Lock lock = new ReentrantLock();
     private volatile int lastHitter = 0;
 
     private static int idGenerator = 0;
@@ -75,15 +71,16 @@ public class Ball {
         double dy = b.pos.y() - a.pos.y();
         double dist = Math.hypot(dx, dy);
         double minD = a.radius + b.radius;
+
         if (dist >= minD) {
             return false;
         }
+
         Ball first = (a.id < b.id) ? a : b;
         Ball second = (a.id < b.id) ? b : a;
-        first.getLock().lock();
-        try {
-            second.getLock().lock();
-            try {
+
+        synchronized (first) {
+            synchronized (second) {
                 dx = b.pos.x() - a.pos.x();
                 dy = b.pos.y() - a.pos.y();
                 dist = Math.hypot(dx, dy);
@@ -105,18 +102,14 @@ public class Ball {
                     double dvn = dvx * nx + dvy * ny;
 
                     if (dvn <= 0) {
-                        double imp = -(1 + RESTITUTION_FACTOR) * dvn / (1.0/a.mass + 1.0/b.mass);
+                        double imp = -(1 + RESTITUTION_FACTOR) * dvn / (1.0 / a.mass + 1.0 / b.mass);
                         a.vel = new V2d(a.vel.x() - (imp / a.mass) * nx, a.vel.y() - (imp / a.mass) * ny);
                         b.vel = new V2d(b.vel.x() + (imp / b.mass) * nx, b.vel.y() + (imp / b.mass) * ny);
                     }
                     return true;
                 }
                 return false;
-            } finally {
-                second.getLock().unlock();
             }
-        } finally {
-            first.getLock().unlock();
         }
     }
 
@@ -129,11 +122,7 @@ public class Ball {
     	return radius;
     }
 
-    public Lock getLock() {
-        return lock;
-    }
-
-    public synchronized int synchronizedGetNextId() {
+    public static synchronized int synchronizedGetNextId() {
         return idGenerator++;
     }
 
