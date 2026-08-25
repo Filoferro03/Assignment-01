@@ -9,32 +9,26 @@ import pcd.common.view.ViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors; // Import aggiunto per l'Executor Framework
 
 public class TaskController extends AbstractGameController {
 
 	private final int numTasks;
 	private final List<PhysicsTask> physicsTasks;
 	private final List<CollisionTask> collisionTasks;
-	private final BagOfTasks bagOfTasks;
-	private final List<WorkerThread> workers;
+	private final ExecutorService executor;
 
 	public TaskController(Board board, View view, ViewModel viewModel, BoundedBuffer<Cmd> buffer) {
 		super(board, view, viewModel, buffer);
 		this.numTasks = Runtime.getRuntime().availableProcessors() + 1;
 		this.physicsTasks = new ArrayList<>(numTasks);
 		this.collisionTasks = new ArrayList<>(numTasks);
-		this.bagOfTasks = new BagOfTasks();
-		this.workers = new ArrayList<>(numTasks);
+		this.executor = Executors.newFixedThreadPool(numTasks);
 
 		for (int i = 0; i < numTasks; i++) {
 			physicsTasks.add(new PhysicsTask(i, numTasks, board));
 			collisionTasks.add(new CollisionTask(i, numTasks, board));
-		}
-
-		for (int i = 0; i < numTasks; i++) {
-			WorkerThread worker = new WorkerThread(bagOfTasks);
-			workers.add(worker);
-			worker.start();
 		}
 	}
 
@@ -45,17 +39,21 @@ public class TaskController extends AbstractGameController {
 			for (PhysicsTask pTask : physicsTasks) {
 				pTask.setDt(dt);
 				pTask.setLatch(moveLatch);
-				bagOfTasks.addTask(pTask);
+				executor.execute(pTask);
 			}
 			moveLatch.await();
+
 			board.buildSpatialGrid();
+
 			CustomLatch collLatch = new CustomLatch(numTasks);
 			for (CollisionTask cTask : collisionTasks) {
 				cTask.setLatch(collLatch);
-				bagOfTasks.addTask(cTask);
+				executor.execute(cTask);
 			}
 			collLatch.await();
+
 			board.updateGlobalState(dt);
+
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 		}
@@ -63,7 +61,7 @@ public class TaskController extends AbstractGameController {
 
 	@Override
 	protected void onGameOver() {
-		bagOfTasks.shutdown();
+		executor.shutdown();
 		super.onGameOver();
 	}
 }
