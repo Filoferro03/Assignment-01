@@ -12,6 +12,9 @@ public abstract class AbstractGameController extends Thread {
     protected final ViewModel viewModel;
     protected final BoundedBuffer<Cmd> buffer;
 
+    private long totalPhysicsTimeNano = 0;
+    private int stepCount = 0;
+
     public AbstractGameController(Board board, View view, ViewModel viewModel, BoundedBuffer<Cmd> buffer) {
         this.board = board;
         this.view = view;
@@ -32,12 +35,26 @@ public abstract class AbstractGameController extends Thread {
             }
             long elapsed = System.currentTimeMillis() - lastUpdateTime;
             lastUpdateTime = System.currentTimeMillis();
+            long startPhys = System.nanoTime();
             executePhysicsStep(elapsed);
+            long endPhys = System.nanoTime();
+            totalPhysicsTimeNano += (endPhys - startPhys);
+            stepCount++;
             nFrames++;
             int framePerSec = 0;
             long dt = (System.currentTimeMillis() - t0);
             if (dt > 0) {
                 framePerSec = (int)(nFrames * 1000 / dt);
+            }
+            if (stepCount % 100 == 0) {
+                double avgTimeMs = (totalPhysicsTimeNano / 1_000_000.0) / stepCount;
+                System.out.printf("[Benchmark] %s | Core CPU: %d | FPS complessivi: %d | Tempo medio fisica: %.2f ms%n",
+                        this.getClass().getSimpleName(),
+                        Runtime.getRuntime().availableProcessors(),
+                        framePerSec,
+                        avgTimeMs);
+                totalPhysicsTimeNano = 0;
+                stepCount = 0;
             }
             viewModel.update(board, framePerSec);
             view.render();
