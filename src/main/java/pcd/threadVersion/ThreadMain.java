@@ -16,7 +16,7 @@ public class ThreadMain {
         Board board = new Board(conf);
         BoundedBufferImpl<Cmd> buffer = new BoundedBufferImpl<>(100);
         ViewModel viewModel = new ViewModel();
-        View view = new View(viewModel, 900, 700, buffer);
+        View view = new View(viewModel, 900, 600, buffer);
         ThreadController gameLoop = new ThreadController(board, view, viewModel, buffer);
         BotPlayer bot = new BotPlayer(buffer, board);
         bot.setDaemon(true);

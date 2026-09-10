@@ -17,7 +17,7 @@ public class TaskMain {
         BoundedBufferImpl<Cmd> buffer = new BoundedBufferImpl<>(10);
 
         ViewModel viewModel = new ViewModel();
-        View view = new View(viewModel, 900, 700, buffer);
+        View view = new View(viewModel, 900, 600, buffer);
 
         TaskController gameLoop = new TaskController(board, view, viewModel, buffer);
 
