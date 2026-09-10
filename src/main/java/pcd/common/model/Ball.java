@@ -46,13 +46,18 @@ public class Ball {
      */
     private void applyBoundaryConstraints(Board ctx){
         Boundary bounds = ctx.getBounds();
+
+        // Controllo Asse X
         if (pos.x() + radius > bounds.x1()){
             pos = new P2d(bounds.x1() - radius, pos.y());
             vel = vel.getSwappedX();
         } else if (pos.x() - radius < bounds.x0()){
             pos = new P2d(bounds.x0() + radius, pos.y());
             vel = vel.getSwappedX();
-        } else if (pos.y() + radius > bounds.y1()){
+        }
+
+        // Controllo Asse Y (Senza 'else' iniziale!)
+        if (pos.y() + radius > bounds.y1()){
             pos = new P2d(pos.x(), bounds.y1() - radius);
             vel = vel.getSwappedY();
         } else if (pos.y() - radius < bounds.y0()){
