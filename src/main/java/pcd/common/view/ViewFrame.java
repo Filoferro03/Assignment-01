@@ -75,12 +75,12 @@ public class ViewFrame extends JFrame {
         
         public VisualiserPanel(int w, int h){
             setSize(w,h + 25);
-            ox = w/2;
-            oy = h/2;
-            delta = Math.min(ox, oy) - 25;
         }
 
         public void paint(Graphics g){
+			ox = this.getWidth()/2;
+			oy = this.getHeight()/2;
+			delta = (int) Math.min(ox / 1.5, oy) - 10;
     		Graphics2D g2 = (Graphics2D) g;
     		
     		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
