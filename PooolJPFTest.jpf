@@ -1,0 +1,2 @@
+target=pcd.jpf.PooolJPFTest
+classpath=target/classes
