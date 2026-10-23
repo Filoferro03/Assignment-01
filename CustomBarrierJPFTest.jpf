@@ -1,0 +1,2 @@
+target=pcd.jpf.CustomBarrierJPFTest
+classpath=target/classes

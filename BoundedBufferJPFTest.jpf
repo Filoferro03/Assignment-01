@@ -1,0 +1,2 @@
+target=pcd.jpf.BoundedBufferJPFTest
+classpath=target/classes
